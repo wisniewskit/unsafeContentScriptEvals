@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "name": "__MSG_addonName__",
+  "default_locale": "en_US",
+  "description": "__MSG_addonDescription__",
+  "version": "0.1",
+  "homepage_url": "http://www.mozilla.com/",
+  "applications": {
+    "gecko": {
+      "id": "@UnsafeContentScriptEvals",
+      "strict_min_version": "59.0b5"
+    }
+  },
+  "permissions": [
+    "<all_urls>",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "browser_action": {
+    "default_title": "__MSG_addonName__",
+    "browser_style": true
+  },
+  "background": {
+    "scripts": [
+      "UnsafeContentScriptEvalsBackground.js",
+      "myBackground.js"
+    ]
+  },
+  "content_scripts": [{
+    "js": ["myContent.js"],
+    "matches": ["<all_urls>"],
+    "run_at": "document_start",
+    "all_frames": true
+  }]
+}

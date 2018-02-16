@@ -1,0 +1,8 @@
+{
+  "addonName": {
+    "message": "Unsafe Content Script Evals"
+  },
+  "addonDescription": {
+    "message": "A library to allow window.eval to function in content scripts regardless of the CSPs specified by web pages."
+  }
+}

@@ -1,0 +1,102 @@
+----------
+The basics
+----------
+
+This library is intended as a means to allow active Firefox extensions
+to call window.eval in their content scripts even if a given page has
+specified a Content Security Policy (CSP) which disallows unsafe-eval.
+
+This is in the spirit of the CSP specification, which states that
+user addons are not meant to be beholden to CSP. Of course, addons
+using window.eval need to be fully aware of the security and other
+implications of its use, and should follow best practices to isolate
+themselves from the rest of the page script, as well as to only
+call window.eval on trusted (read: local!) code.
+
+Please note that this bypass can only work for pages that are loaded
+after the addon has been installed; users will need to reload any open
+tabs for the bypass to function on them.
+
+Also please note that this library is not discriminatory; it affects
+ALL active addons, not just yours. In practice this should not be a
+problem, but it is fully possible that this could uncover bugs in
+other addons which rely on being blocked by the CSP for some reason.
+
+
+-----
+Setup
+-----
+
+Place both of the UnsafeContentScriptEvals*.js files into the same
+directory in your addon and ensure that you run the background script
+before any other background scripts which will call window.eval:
+
+  "background": {
+    "scripts": [
+      "path/to/UnsafeContentScriptEvalsBackground.js",
+      "myBackground.js"
+    ]
+  }
+
+You will also need to grant the webRequestBlocking permission:
+
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking"
+  ]
+
+
+-----
+Usage
+-----
+
+Your background scripts will gain access to two new functions:
+
+1. UnsafeContentScriptEvals.allow(filters)
+
+   Activates the unsafe-eval bypass for all addons for the
+   given extension filters. For instance:
+
+     UnsafeContentScriptEvals.allow({urls: ["<all_urls>"]});
+
+   The filters may be as specific as desired, but only the filters
+   specified in the most recent call to allow() will be active.
+
+2. UnsafeContentScriptEvals.useCSPDefaults()
+
+   Deactivates all current bypasses, if you should need to
+   toggle this behavior on and off.
+
+Once unsafe eval is allowed, your content scripts will be able to
+call window.eval in spite of the page's content security policy.
+This includes using window.eval as the content script loads, when
+it handles events, or when the background script calls the
+tabs.executeScript function.
+
+You can see examples of usage in the scripts bundled with this demo
+addon, myBackground.js and myContent.js.
+
+
+--------------
+Technical Info
+--------------
+
+In order to allow unsafe eval for content scripts even if a page's
+CSP disallows it, we have to monitor for CSP headers on main_frames
+and sub_frames, and add 'unsafe-eval' as needed to their script-src
+directive (the rest of the policy is left untouched).
+
+Of course, this would defeat the point of the page disallowing unsafe
+evals, and be a potential security risk. As such a content script is
+used to monitor for such violation manually, by overriding the default
+methods that can do an unsafe-eval and handling them as per the CSP
+spec (firing securitypolicyviolation events, logging warnings to the
+console with clean stack traces, and also sending violation reports
+if a report-uri directive requests them).
+
+It should be safe for multiple installed addons to use this library,
+as it is designed so that only one needs to be active for unsafe evals
+to be accessible to all of them. However, note that ALL active addons
+will be able to call window.eval, not just your own. This should not
+be a problem in practice, but if other addons rely on being blocked
+for some reason, they may encounter issues.
