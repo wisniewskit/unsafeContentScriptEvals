@@ -57,10 +57,22 @@ Your background scripts will gain access to two new functions:
    Activates the unsafe-eval bypass for all addons for the
    given extension filters. For instance:
 
-     UnsafeContentScriptEvals.allow({urls: ["<all_urls>"]});
+     key = UnsafeContentScriptEvals.allow({urls: ["<all_urls>"]});
 
    The filters may be as specific as desired, but only the filters
    specified in the most recent call to allow() will be active.
+
+   If you wish to run eval-like code not in a content script, but
+   in a page script, then you will need to whitelist the call by
+   adding a comment to its end with the key returned by the
+   allow function:
+
+     // in the background script
+     let key = UnsafeContentScriptEvals.allow();
+
+     // in the page script
+     let stringToEval = "console.log('test')";
+     eval(stringToEval + "//" + key);
 
 2. UnsafeContentScriptEvals.useCSPDefaults()
 

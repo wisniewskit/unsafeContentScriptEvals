@@ -7,6 +7,8 @@
 const ContentScriptURL = new URL(document.currentScript.src).
                            pathname.replace("Background", "Content");
 
+const SecureAllowEvalsToken = crypto.getRandomValues(new Uint32Array(4)).join("");
+
 var UnsafeContentScriptEvals = (function() {
   "use strict";
 
@@ -78,7 +80,8 @@ var UnsafeContentScriptEvals = (function() {
       // uses window.eval to setup the page script).
       await unregisterConfigContentScript(url);
       let code = `BlockUnsafeEvals(${JSON.stringify(url)},
-                                   ${JSON.stringify(CSP)})`;
+                                   ${JSON.stringify(CSP)},
+                                   ${JSON.stringify(SecureAllowEvalsToken)})`;
       ActiveConfigContentScripts[url] = await browser.contentScripts.register({
         allFrames: true,
         matches: [url],
@@ -107,6 +110,8 @@ var UnsafeContentScriptEvals = (function() {
       Filters,
       ["blocking", "responseHeaders"]
     );
+
+    return SecureAllowEvalsToken;
   }
 
   function useCSPDefaults() {

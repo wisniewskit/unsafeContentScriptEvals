@@ -4,8 +4,8 @@
 
 "use strict";
 
-function BlockUnsafeEvals(url, CSP) {
-  window.eval(`(function(CSP) {
+function BlockUnsafeEvals(url, CSP, AllowEvalsToken) {
+  window.eval(`(function(CSP, AllowEvalsToken) {
     const ErrorSource = "call to eval() or related function blocked by CSP";
     const ErrorMessage = "Content Security Policy: The page’s settings blocked the loading of a resource at self (“$DIRECTIVE$”). Source: " + ErrorSource + ".";
     const ExceptionMessage = "call to $NAME$() blocked by CSP";
@@ -21,6 +21,12 @@ function BlockUnsafeEvals(url, CSP) {
       } catch(e) {}
     }
 
+    let AllowEvalsTokenWithComment = "//" + AllowEvalsToken;
+
+    function shouldAllowAnyway(str) {
+      return AllowEvalsTokenWithComment === str.substring(str.length - AllowEvalsTokenWithComment.length);
+    }
+
     let referrer = document.referrer;
     let reportURI = (CSP.originalPolicy.match(/report-uri ([^;]*)/i) || [])[1];
 
@@ -30,7 +36,8 @@ function BlockUnsafeEvals(url, CSP) {
       if (desc) {
         let oldValue = desc.value;
         desc.value = function() {
-          if (typeof arguments[0] === "string") {
+          let paramToCheck = name === "Function" ? arguments[arguments.length-1] : arguments[0];
+          if (typeof paramToCheck === "string" && !shouldAllowAnyway(paramToCheck)) {
             let init = Object.assign(CSP, {
               bubbles: true,
               composed: true,
@@ -74,6 +81,6 @@ function BlockUnsafeEvals(url, CSP) {
         Object.defineProperty(window, name, desc);
       }
     }
-  })(${JSON.stringify(CSP)});`);
+  })(${JSON.stringify(CSP)}, ${JSON.stringify(AllowEvalsToken)});`);
   browser.runtime.sendMessage({unregisterFor: url});
 }
