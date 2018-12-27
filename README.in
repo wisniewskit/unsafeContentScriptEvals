@@ -85,6 +85,12 @@ This includes using window.eval as the content script loads, when
 it handles events, or when the background script calls the
 tabs.executeScript function.
 
+It is also possible to disable the sending of CSP reports when this
+library takes over CSP, by setting a configuration option on the
+background script before UnsafeContentScriptEvalsBackground.js loads:
+
+  window.UnsafeContentScriptEvalsBlockReports = true;
+
 You can see examples of usage in the scripts bundled with this demo
 addon, myBackground.js and myContent.js.
 
